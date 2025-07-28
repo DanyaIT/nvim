@@ -1,3 +1,11 @@
+vim.bo.expandtab = true
+vim.bo.tabstop = 2
+vim.bo.shiftwidth = 2
+
+--Checking spelling
+vim.opt.spell = true
+vim.opt.spelllang = { "en_us", "ru" }
+
 --Deleting without save in buffer (n-mode)
 vim.keymap.set("n", "d", '"_d', { noremap = true })
 vim.keymap.set("n", "x", '"_x', { noremap = true })

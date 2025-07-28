@@ -26,6 +26,12 @@ return {
 					},
 				},
 
+				jsonls = {
+					on_attach = function(client, bufnr)
+						client.server_capabilities.documentFormattingProvider = false
+					end,
+				},
+
 				eslint = {
 					settings = {
 						codeAction = {
@@ -45,6 +51,7 @@ return {
 						packageManager = "npm",
 						quiet = false,
 						rulesCustomizations = {},
+						allowNoConfig = true,
 						run = "onType",
 						useESLintClass = false,
 						validate = "on",
@@ -73,17 +80,19 @@ return {
 	},
 
 	{ import = "lazyvim.plugins.extras.lang.typescript" },
+
 	{
 		"nvim-treesitter/nvim-treesitter",
 		opts = {
 			ensure_installed = {
 				"javascript",
 				"typescript",
-				"jsx",
 				"html",
 				"css",
 				"scss",
 				"json",
+				"svelte",
+				"scala",
 				"jsonc",
 				"markdown",
 				"markdown_inline",
