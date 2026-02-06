@@ -1,5 +1,5 @@
 return {
-	-- LSP Config
+	-- LSP
 	{
 		"neovim/nvim-lspconfig",
 		dependencies = {
@@ -22,22 +22,6 @@ return {
 						client.server_capabilities.documentFormattingProvider = false
 					end,
 				},
-
-				eslint = {
-					settings = {
-						validate = "on",
-						format = false, -- форматирование через Conform
-						codeAction = {
-							disableRuleComment = { enable = true },
-							showDocumentation = { enable = false },
-						},
-					},
-					on_attach = function(client)
-						client.server_capabilities.documentFormattingProvider = false
-						client.server_capabilities.codeActionProvider = true
-					end,
-					filetypes = { "javascript", "typescript", "javascriptreact", "typescriptreact" },
-				},
 			},
 			setup = {
 				tsserver = function(_, opts)
@@ -51,7 +35,9 @@ return {
 
 	{ import = "lazyvim.plugins.extras.lang.typescript" },
 
+	-- =====================================================================
 	-- Treesitter
+	-- =====================================================================
 	{
 		"nvim-treesitter/nvim-treesitter",
 		opts = {
@@ -69,6 +55,7 @@ return {
 				"markdown_inline",
 				"ejs",
 				"prisma",
+				"yml",
 			},
 			highlight = { enable = true },
 			indent = { enable = true },
@@ -90,7 +77,9 @@ return {
 		},
 	},
 
-	-- nvim-cmp
+	-- =====================================================================
+	-- Completion (nvim-cmp)
+	-- =====================================================================
 	{
 		"hrsh7th/nvim-cmp",
 		dependencies = {
@@ -104,6 +93,7 @@ return {
 			"amarakon/nvim-cmp-fonts",
 			"dmitmel/cmp-cmdline-history",
 			"hrsh7th/cmp-nvim-lsp-signature-help",
+			"f3fora/cmp-spell",
 		},
 		opts = function(_, opts)
 			local cmp = require("cmp")
@@ -115,6 +105,16 @@ return {
 				{ name = "path" },
 				{ name = "buffer" },
 				{ name = "emoji" },
+				{
+					name = "spell",
+					option = {
+						keep_all_entries = false,
+						enable_in_context = function()
+							return true
+						end,
+						preselect_correct_word = true,
+					},
+				},
 			})
 
 			opts.formatting = {
@@ -148,13 +148,14 @@ return {
 		end,
 	},
 
+	-- =====================================================================
 	-- Mason
+	-- =====================================================================
 	{
 		"mason-org/mason.nvim",
 		opts = {
 			ensure_installed = {
 				"typescript-language-server",
-				"eslint-lsp",
 				"json-lsp",
 				"html-lsp",
 				"css-lsp",
@@ -167,7 +168,9 @@ return {
 		},
 	},
 
+	-- =====================================================================
 	-- Template strings
+	-- =====================================================================
 	{
 		"axelvc/template-string.nvim",
 		event = "InsertEnter",
@@ -181,39 +184,34 @@ return {
 		},
 	},
 
-	-- Conform — единый форматтер
+	-- =====================================================================
+	-- Formatting (Conform) — ONLY Prettier
+	-- =====================================================================
 	{
 		"stevearc/conform.nvim",
 		opts = {
 			formatters_by_ft = {
-				javascript = { "eslint_d", "prettierd" },
-				typescript = { "eslint_d", "prettierd" },
-				javascriptreact = { "eslint_d", "prettierd" },
-				typescriptreact = { "eslint_d", "prettierd" },
-			},
-			formatters = {
-				eslint_d = {
-					command = "eslint_d",
-					args = { "--fix-to-stdout", "--stdin", "--stdin-filename", "$FILENAME" },
-					stdin = true,
-				},
+				javascript = { "prettierd" },
+				typescript = { "prettierd" },
+				javascriptreact = { "prettierd" },
+				typescriptreact = { "prettierd" },
 			},
 			format_on_save = {
-				timeout_ms = 1000, -- быстрее
+				async = true,
+				timeout_ms = 500,
 				lsp_fallback = false,
-				filter = function(bufnr)
-					local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
-					return ft:match("javascript") or ft:match("typescript")
-				end,
 			},
 		},
 	},
 
-	-- nvim-lint — только диагностика
+	-- =====================================================================
+	-- Linting (nvim-lint) — ONLY ESLint diagnostics
+	-- =====================================================================
 	{
 		"mfussenegger/nvim-lint",
 		config = function()
 			local lint = require("lint")
+
 			lint.linters_by_ft = {
 				javascript = { "eslint_d" },
 				typescript = { "eslint_d" },
@@ -221,18 +219,17 @@ return {
 				typescriptreact = { "eslint_d" },
 			}
 
-			vim.api.nvim_create_autocmd({ "BufWritePost" }, {
+			vim.api.nvim_create_autocmd("BufWritePost", {
 				callback = function()
-					local ft = vim.api.nvim_buf_get_option(0, "filetype")
-					if ft:match("javascript") or ft:match("typescript") then
-						lint.try_lint()
-					end
+					lint.try_lint()
 				end,
 			})
 		end,
 	},
 
-	-- File operations
+	-- =====================================================================
+	-- LSP File Operations
+	-- =====================================================================
 	{
 		"antosha417/nvim-lsp-file-operations",
 		dependencies = { "nvim-lua/plenary.nvim" },
