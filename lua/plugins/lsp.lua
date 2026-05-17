@@ -1,19 +1,24 @@
 return {
-	-- LSP
+	-- =====================================================================
+	-- LSP (via LazyVim typescript extra → uses vtsls)
+	-- =====================================================================
+	{ import = "lazyvim.plugins.extras.lang.typescript" },
+	{ import = "lazyvim.plugins.extras.linting.eslint" },
+
+	-- Additional LSP server overrides
 	{
 		"neovim/nvim-lspconfig",
-		dependencies = {
-			"jose-elias-alvarez/typescript.nvim",
-			"pmizio/typescript-tools.nvim",
-			"dmmulroy/ts-error-translator.nvim",
-		},
 		opts = {
 			servers = {
-				tsserver = {
+				vtsls = {
 					settings = {
-						completions = { completeFunctionCalls = true },
-						javascript = { suggest = { autoImports = true } },
-						typescript = { suggest = { autoImports = true } },
+						typescript = {
+							suggest = { autoImports = true },
+							tsserver = { maxTsServerMemory = 4096 },
+						},
+						javascript = {
+							suggest = { autoImports = true },
+						},
 					},
 				},
 
@@ -22,18 +27,22 @@ return {
 						client.server_capabilities.documentFormattingProvider = false
 					end,
 				},
-			},
-			setup = {
-				tsserver = function(_, opts)
-					require("typescript").setup({ server = opts })
-					require("ts-error-translator").setup()
-					return true
-				end,
+
+				eslint = {
+					settings = {
+						workingDirectories = { mode = "auto" },
+					},
+				},
 			},
 		},
 	},
 
-	{ import = "lazyvim.plugins.extras.lang.typescript" },
+	-- Readable TS errors in diagnostics
+	{
+		"dmmulroy/ts-error-translator.nvim",
+		ft = { "typescript", "typescriptreact" },
+		config = true,
+	},
 
 	-- =====================================================================
 	-- Treesitter
@@ -44,18 +53,17 @@ return {
 			ensure_installed = {
 				"javascript",
 				"typescript",
+				"tsx",
 				"html",
 				"css",
 				"scss",
 				"json",
+				"jsonc",
 				"svelte",
 				"scala",
-				"jsonc",
 				"markdown",
 				"markdown_inline",
-				"ejs",
 				"prisma",
-				"yml",
 			},
 			highlight = { enable = true },
 			indent = { enable = true },
@@ -68,8 +76,6 @@ return {
 					node_decremental = "grm",
 				},
 			},
-			context_commentstring = { enable = true, enable_autocmd = false },
-			autotag = { enable = true },
 		},
 		dependencies = {
 			"JoosepAlviste/nvim-ts-context-commentstring",
@@ -90,9 +96,8 @@ return {
 			"hrsh7th/cmp-emoji",
 			"onsails/lspkind.nvim",
 			"dcampos/cmp-snippy",
-			"amarakon/nvim-cmp-fonts",
-			"dmitmel/cmp-cmdline-history",
 			"hrsh7th/cmp-nvim-lsp-signature-help",
+			"dmitmel/cmp-cmdline-history",
 			"f3fora/cmp-spell",
 		},
 		opts = function(_, opts)
@@ -155,15 +160,40 @@ return {
 		"mason-org/mason.nvim",
 		opts = {
 			ensure_installed = {
-				"typescript-language-server",
+				"vtsls",
+				"eslint-lsp",
 				"json-lsp",
 				"html-lsp",
 				"css-lsp",
 				"svelte-language-server",
 				"prettierd",
-				"eslint_d",
 				"stylelint",
 				"markdownlint",
+			},
+		},
+	},
+
+	-- =====================================================================
+	-- Formatting (prettier only — eslint-lsp handles lint fixes via code actions)
+	-- =====================================================================
+	{
+		"stevearc/conform.nvim",
+		opts = {
+			formatters_by_ft = {
+				javascript = { "prettierd" },
+				typescript = { "prettierd" },
+				javascriptreact = { "prettierd" },
+				typescriptreact = { "prettierd" },
+				json = { "prettierd" },
+				jsonc = { "prettierd" },
+				html = { "prettierd" },
+				css = { "prettierd" },
+				scss = { "prettierd" },
+				markdown = { "prettierd" },
+			},
+			format_on_save = {
+				timeout_ms = 3000,
+				lsp_fallback = false,
 			},
 		},
 	},
@@ -182,49 +212,6 @@ return {
 				jsx = [["]],
 			},
 		},
-	},
-
-	-- =====================================================================
-	-- Formatting (Conform) — ONLY Prettier
-	-- =====================================================================
-	{
-		"stevearc/conform.nvim",
-		opts = {
-			formatters_by_ft = {
-				javascript = { "prettierd" },
-				typescript = { "prettierd" },
-				javascriptreact = { "prettierd" },
-				typescriptreact = { "prettierd" },
-			},
-			format_on_save = {
-				async = true,
-				timeout_ms = 500,
-				lsp_fallback = false,
-			},
-		},
-	},
-
-	-- =====================================================================
-	-- Linting (nvim-lint) — ONLY ESLint diagnostics
-	-- =====================================================================
-	{
-		"mfussenegger/nvim-lint",
-		config = function()
-			local lint = require("lint")
-
-			lint.linters_by_ft = {
-				javascript = { "eslint_d" },
-				typescript = { "eslint_d" },
-				javascriptreact = { "eslint_d" },
-				typescriptreact = { "eslint_d" },
-			}
-
-			vim.api.nvim_create_autocmd("BufWritePost", {
-				callback = function()
-					lint.try_lint()
-				end,
-			})
-		end,
 	},
 
 	-- =====================================================================
